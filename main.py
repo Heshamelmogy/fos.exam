@@ -1,16 +1,31 @@
-# This is a sample Python script.
+from flask import Flask, render_template, request
+from flask_sqlalchemy import SQLAlchemy
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+db = SQLAlchemy(app)
 
+class Book(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(80), nullable=False)
+    author = db.Column(db.String(80), nullable=False)
+    publication_year = db.Column(db.Integer, nullable=False)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@app.route('/books')
+def books():
+    books = Book.query.all()
+    return render_template('books.html', books=books)
 
+@app.route('/add_book', methods=['POST'])
+def add_book():
+    title = request.form['title']
+    author = request.form['author']
+    publication_year = request.form['publication_year']
+    book = Book(title=title, author=author, publication_year=publication_year)
+    db.session.add(book)
+    db.session.commit()
+    return redirect(url_for('books'))
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    db.create_all()
+    app.run(debug=True)
